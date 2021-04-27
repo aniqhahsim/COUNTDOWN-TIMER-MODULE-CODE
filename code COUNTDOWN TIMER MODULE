@@ -1,0 +1,201 @@
+#include<p18f4550.inc>
+
+lp_cnt1 	set 0x00
+lp_cnt2 	set 0x01
+
+			org 0x00
+			goto start
+			org 0x08
+			retfie
+			org 0x18
+			retfie
+
+			
+
+dup_nop		macro aniq
+			variable i
+i = 0
+			while i < aniq
+			nop
+i += 1
+			endw
+			endm
+			
+
+;DELAY FOR 1 SECOND
+
+
+DELAY 		MOVLW D'80'
+			MOVWF lp_cnt2,A
+ANEW1		MOVLW D'250'
+			MOVWF lp_cnt1,A
+ANEW2 		dup_nop D'247'
+			DECFSZ lp_cnt1,F,A
+			BRA ANEW2
+			DECFSZ lp_cnt2,F,A
+			BRA ANEW1
+			NOP
+			RETURN
+			
+			
+
+
+;MAIN PROGRAM
+
+
+start		CLRF  TRISD, A  	;set portd as output 
+			CLRF  TRISC, A		;set portc as output
+CHECK		CALL  KEYPAD 		;row and column
+			BRA   CHECK			;loop keypad 
+
+
+
+;SUBROUTINE FOR BUZZER  
+
+siren       CALL   DELAY					
+            BSF    PORTC,2,A	;active buzzer at portc 2			
+            CALL   DELAY
+            BCF    PORTC,2,A	;deactivate buzzer at portc 2
+            DECFSZ PORTD,F,A	;decrease value on 7-segment until zero
+            BRA    siren		;call siren function
+            return
+
+
+;SUBROUTINE FOR KEYPAD
+
+KEYPAD		SETF  TRISB, A		;PORTB input
+			BCF   PORTD, 7, A	;clear last row
+			BSF   PORTD, 4, A	;set first row
+			BTFSS PORTB, 0, A	;check column 1
+			BRA   KEYPAD2		;check next button
+			MOVLW 0x01			;value for working register
+			MOVWF PORTD, A		;to displat to 7 segment 
+			CALL  siren
+
+KEYPAD2	    BCF   PORTD, 7, A	
+			BSF   PORTD, 4, A	
+			BTFSS PORTB, 1, A	;check column 2
+			BRA   KEYPAD3
+			MOVLW 0x02
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPAD3	    BCF   PORTD, 7, A	
+			BSF   PORTD, 4, A	
+			BTFSS PORTB, 2, A	;check column 3
+			BRA   KEYPADA		
+			MOVLW 0x03
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPADA	    BCF   PORTD, 7, A
+			BSF   PORTD, 4, A
+			BTFSS PORTB, 3, A	;check column 4
+			BRA   KEYPAD4
+			MOVLW 0x0A
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPAD4	    BCF   PORTD, 4, A	;clear first row
+			BSF   PORTD, 5, A	;set second row
+			BTFSS PORTB, 0, A	;check column 1
+			BRA   KEYPAD5
+			MOVLW 0x04
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPAD5	    BCF   PORTD, 4, A
+			BSF   PORTD, 5, A
+			BTFSS PORTB, 1, A	;check column 2
+			BRA   KEYPAD6
+			MOVLW 0x05
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPAD6	    BCF   PORTD, 4, A
+			BSF   PORTD, 5, A
+			BTFSS PORTB, 2, A	;check column 3
+			BRA   KEYPADB
+			MOVLW 0x06
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPADB	    BCF   PORTD, 4, A
+			BSF   PORTD, 5, A
+			BTFSS PORTB, 3, A	;check column 4
+			BRA   KEYPAD7
+			MOVLW 0x0B
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPAD7	    BCF   PORTD, 5, A	;clear second row
+			BSF   PORTD, 6, A	;set third row
+			BTFSS PORTB, 0, A	;check column 1
+			BRA   KEYPAD8
+			MOVLW 0x07
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPAD8	    BCF   PORTD, 5, A
+			BSF   PORTD, 6, A
+			BTFSS PORTB, 1, A	;check column 2
+			BRA   KEYPAD9
+			MOVLW 0x08
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPAD9     BCF   PORTD, 5, A
+			BSF   PORTD, 6, A
+			BTFSS PORTB, 2, A	;check column 3
+			BRA   KEYPADC
+			MOVLW 0x09
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPADC     BCF   PORTD, 5, A
+			BSF   PORTD, 6, A
+			BTFSS PORTB, 3, A	;check column 3
+			BRA   KEYPADSTAR
+			MOVLW 0x0C
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPADSTAR  BCF   PORTD, 6, A	;clear third row
+			BSF   PORTD, 7, A	;set fourth row
+			BTFSS PORTB, 0, A	;check column 1
+			BRA   KEYPAD0 
+			MOVLW 0x06
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPAD0     BCF   PORTD, 6, A
+			BSF   PORTD, 7, A
+			BTFSS PORTB, 1, A	;check column 2
+			BRA   KEYPAD#
+			MOVLW 0x00
+			MOVWF PORTD, A
+			
+KEYPAD#     BCF   PORTD, 6, A
+			BSF   PORTD, 7, A
+			BTFSS PORTB, 2, A	;check column 3
+			BRA   KEYPADD
+			MOVLW 0x09
+			MOVWF PORTD, A
+			CALL  siren
+
+KEYPADD     BCF   PORTD, 6, A
+			BSF   PORTD, 7, A
+			BTFSS PORTB, 3, A	;check column 4
+			BRA   SHOW
+			MOVLW 0x0D
+			MOVWF PORTD, A
+			CALL  siren
+
+
+
+SHOW		RETURN			 
+			
+
+			NOP
+			END
+
